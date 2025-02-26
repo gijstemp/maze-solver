@@ -1,5 +1,6 @@
 from tkinter import Tk, BOTH, Canvas
 import time
+import random
 
 class Window():
     def __init__(self, width, height):
@@ -50,6 +51,8 @@ class Cell():
         self._y1 = None
         self._y2 = None
         self._win = win
+        self.visited = False
+        
 
     def draw(self, x1, y1, x2, y2):
         if self._win is None:
@@ -100,7 +103,7 @@ class Cell():
         self._win.draw_line(line, fill_color)
         
 class Maze():
-    def __init__(self, x1, y1, num_rows, num_cols, cell_size_x, cell_size_y, window=None):
+    def __init__(self, x1, y1, num_rows, num_cols, cell_size_x, cell_size_y, window=None, seed=None):
         self._x1 = x1
         self._y1 = y1
         self._num_rows = num_rows
@@ -112,6 +115,11 @@ class Maze():
         
         self._create_cells()
         self._break_entrance_and_exit()
+        if seed is not None:
+            self._seed = random.seed(seed)
+        self.break_walls_r(0, 0)
+        self._reset_cells_visited()
+  
         
     def _create_cells(self):
         for col in range(self._num_cols):
@@ -146,3 +154,45 @@ class Maze():
         self._cells[self._num_cols - 1][self._num_rows - 1].has_bottom_wall = False
         self._draw_cell(0, 0)
         self._draw_cell(self._num_cols - 1, self._num_rows - 1)
+    
+    def break_walls_r(self, i, j):
+        self._cells[i][j].visited = True
+        while True:
+            new_list = []
+            if i > 0 and not self._cells[i - 1][j].visited:
+                new_list.append((i - 1, j, 'left'))
+            if i < self._num_cols - 1 and not self._cells[i + 1][j].visited:
+                new_list.append((i + 1, j, 'right'))
+            if j > 0 and not self._cells[i][j - 1].visited:
+                new_list.append((i, j - 1, 'up'))
+            if j < self._num_rows - 1 and not self._cells[i][j + 1].visited:
+                new_list.append((i, j + 1, 'down'))
+            
+            if not new_list:
+                self._draw_cell(i, j)
+                return
+            
+            # Pick a random direction
+            next_i, next_j, direction = random.choice(new_list)
+            
+            # Knock down the walls between the current cell and the chosen cell
+            if direction == 'left':
+                self._cells[i][j].has_left_wall = False
+                self._cells[next_i][next_j].has_right_wall = False
+            elif direction == 'right':
+                self._cells[i][j].has_right_wall = False
+                self._cells[next_i][next_j].has_left_wall = False
+            elif direction == 'up':
+                self._cells[i][j].has_top_wall = False
+                self._cells[next_i][next_j].has_bottom_wall = False
+            elif direction == 'down':
+                self._cells[i][j].has_bottom_wall = False
+                self._cells[next_i][next_j].has_top_wall = False
+            
+            # Move to the chosen cell
+            self.break_walls_r(next_i, next_j)
+        
+    def _reset_cells_visited(self):
+        for col in range(self._num_cols):
+            for row in range(self._num_rows):
+                self._cells[col][row].visited = False

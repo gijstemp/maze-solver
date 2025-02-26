@@ -196,3 +196,55 @@ class Maze():
         for col in range(self._num_cols):
             for row in range(self._num_rows):
                 self._cells[col][row].visited = False
+                
+    def solve(self):
+        return self._solve_r(i=0, j=0)
+    
+    def _solve_r(self, i, j):
+        self._animate()
+        self._cells[i][j].visited = True
+        if i == self._num_cols - 1 and j == self._num_rows - 1:
+            return True
+        
+        for new_i, new_j, direction in self._get_neighbours(i, j):
+            if not self._cells[new_i][new_j].visited:
+                if direction == 'left' and not self._cells[i][j].has_left_wall:
+                    self._cells[i][j].draw_move(self._cells[new_i][new_j])
+                    if self._solve_r(new_i, new_j):
+                        return True
+                    else:
+                        self._cells[i][j].draw_move(self._cells[new_i][new_j], undo=True)
+                elif direction == 'right' and not self._cells[i][j].has_right_wall:
+                    self._cells[i][j].draw_move(self._cells[new_i][new_j])
+                    if self._solve_r(new_i, new_j):
+                        return True
+                    else:
+                        self._cells[i][j].draw_move(self._cells[new_i][new_j], undo=True)
+                elif direction == 'up' and not self._cells[i][j].has_top_wall:
+                    self._cells[i][j].draw_move(self._cells[new_i][new_j])
+                    if self._solve_r(new_i, new_j):
+                        return True
+                    else:
+                        self._cells[i][j].draw_move(self._cells[new_i][new_j], undo=True)
+                elif direction == 'down' and not self._cells[i][j].has_bottom_wall:
+                    self._cells[i][j].draw_move(self._cells[new_i][new_j])
+                    if self._solve_r(new_i, new_j):
+                        return True
+                    else:
+                        self._cells[i][j].draw_move(self._cells[new_i][new_j], undo=True)
+        
+        return False
+
+    def _get_neighbours(self, i, j):
+        neighbours = []
+        if i > 0:
+            neighbours.append((i - 1, j, 'left'))
+        if i < self._num_cols - 1:
+            neighbours.append((i + 1, j, 'right'))
+        if j > 0:
+            neighbours.append((i, j - 1, 'up'))
+        if j < self._num_rows - 1:
+            neighbours.append((i, j + 1, 'down'))
+        return neighbours
+                    
+        
